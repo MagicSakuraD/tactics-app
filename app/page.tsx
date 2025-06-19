@@ -1,103 +1,466 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Car, Settings, Rocket, Info, FolderOpen } from "lucide-react";
 import Image from "next/image";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+const formSchema = z.object({
+  dataset: z.string().min(1, "请选择数据集类型"),
+  file_id: z.number().min(1, "文件ID必须大于0"),
+  dataset_path: z.string().min(1, "请输入数据集路径"),
+  map_path: z.string().min(1, "请输入地图文件路径"),
+  stamp_start: z.number().optional(),
+  stamp_end: z.number().optional(),
+  perception_range: z.number().min(10).max(200),
+  frame_step: z.number().min(1).max(100),
+});
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+type FormData = z.infer<typeof formSchema>;
+
+const datasetInfo: Record<string, string> = {
+  argoverse2: "支持自动驾驶场景，包含高精度传感器数据",
+  dlp: "停车场景专用数据集，适合泊车算法研究",
+  highD: "高速公路场景，包含车道变换和跟车行为",
+  inD: "交叉路口场景，适合交通冲突分析",
+  rounD: "环形交叉口场景数据",
+  exiD: "高速公路出入口场景",
+  interaction: "复杂交互场景数据集",
+  nuplan: "大规模城市驾驶数据集",
+  womd: "Waymo开放运动数据集，包含多样化驾驶场景",
+};
+
+const datasetOptions = [
+  { value: "argoverse2", label: "Argoverse 2" },
+  { value: "dlp", label: "Dragon Lake Parking (DLP)" },
+  { value: "highD", label: "HighD" },
+  { value: "inD", label: "InD" },
+  { value: "rounD", label: "RounD" },
+  { value: "exiD", label: "ExiD" },
+  { value: "interaction", label: "INTERACTION" },
+  { value: "nuplan", label: "NuPlan" },
+  { value: "womd", label: "Waymo Open Motion Dataset" },
+];
+
+export default function DatasetConfigPage() {
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      dataset: "",
+      file_id: 1,
+      dataset_path: "",
+      map_path: "",
+      perception_range: 50,
+      frame_step: 40,
+    },
+  });
+
+  const selectedDataset = form.watch("dataset");
+
+  const onSubmit = async (data: FormData) => {
+    setIsSubmitting(true);
+    setStatusMessage("");
+
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setStatusMessage("✅ 数据处理已开始！正在加载轨迹数据...");
+
+      // Here you would make the actual API call
+      console.log("Form submitted:", data);
+
+      // Example API call structure:
+      // const response = await fetch('/api/start-visualization', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(data)
+      // })
+    } catch (error) {
+      setStatusMessage("❌ 处理失败，请检查配置参数");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="p-2 bg-blue-600 rounded-lg">
+              <Car className="h-8 w-8 text-white" />
+            </div>
+            <img
+              src="/logo2.jpg"
+              alt="Tactics2D Logo"
+              width={200}
+              height={64}
+              className="h-16 w-auto"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+          <p className="text-lg text-gray-600">
+            配置轨迹数据集和地图参数，开始数据处理
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="pb-6">
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <Settings className="h-6 w-6 text-blue-600" />
+              数据集配置
+            </CardTitle>
+            <CardDescription className="text-base">
+              选择数据集类型并配置相关参数，系统将自动处理轨迹数据
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
+                {/* Basic Configuration */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="dataset"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          数据集类型
+                        </FormLabel>
+
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12">
+                              <SelectValue placeholder="请选择数据集类型" />
+                            </SelectTrigger>
+                          </FormControl>
+
+                          <SelectContent>
+                            {datasetOptions.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <FormMessage />
+
+                        {field.value && (
+                          <Alert className="mt-2">
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                              {datasetInfo[field.value]}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="file_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          文件ID
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            className="h-12"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          指定要处理的数据文件编号
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Path Configuration */}
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="dataset_path"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          数据集路径
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="例如: /home/quinn/APP/Code/tactics2d/data/trajectory_sample/highD/data"
+                              className="h-12 pr-10"
+                              type="file"
+                              {...field}
+                            />
+                            <FolderOpen className="absolute right-3 top-3 h-6 w-6 text-gray-400" />
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          包含轨迹数据文件的文件夹路径
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="map_path"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          地图文件路径
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="例如: /home/quinn/APP/Code/tactics2d/data/highD_map/highD_2.osm"
+                              className="h-12 pr-10"
+                              type="file"
+                              {...field}
+                            />
+                            <FolderOpen className="absolute right-3 top-3 h-6 w-6 text-gray-400" />
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          OpenStreetMap (.osm) 格式的地图文件路径
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Advanced Parameters */}
+                <Card className="border-2 border-dashed border-gray-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-purple-600" />
+                      高级参数配置
+                    </CardTitle>
+                    <CardDescription>调整数据处理的详细参数</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Timestamp Range */}
+                    <div className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="stamp_start"
+                        render={({ field: startField }) => (
+                          <FormField
+                            control={form.control}
+                            name="stamp_end"
+                            render={({ field: endField }) => (
+                              <FormItem>
+                                <FormLabel className="text-base font-semibold">
+                                  时间戳范围 (毫秒)
+                                </FormLabel>
+                                <FormControl>
+                                  <div className="space-y-4">
+                                    <Slider
+                                      min={0}
+                                      max={10000}
+                                      step={100}
+                                      value={[
+                                        startField.value || 0,
+                                        endField.value || 5000,
+                                      ]}
+                                      onValueChange={(values) => {
+                                        startField.onChange(
+                                          values[0] === 0
+                                            ? undefined
+                                            : values[0]
+                                        );
+                                        endField.onChange(
+                                          values[1] === 0
+                                            ? undefined
+                                            : values[1]
+                                        );
+                                      }}
+                                      className="w-full"
+                                    />
+                                    <div className="flex justify-between text-sm">
+                                      <div className="text-gray-500">
+                                        <span>最小: 0</span>
+                                      </div>
+                                      <div className="flex gap-4 font-medium">
+                                        <span className="text-blue-600">
+                                          起始: {startField.value || 0}ms
+                                        </span>
+                                        <span className="text-purple-600">
+                                          结束: {endField.value || "未设置"}ms
+                                        </span>
+                                      </div>
+                                      <div className="text-gray-500">
+                                        <span>最大: 10000</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </FormControl>
+                                <FormDescription>
+                                  拖动滑块设置时间戳范围，留空使用默认时间
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    {/* Processing Parameters */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="perception_range"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-semibold">
+                              感知范围 (米)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="10"
+                                max="200"
+                                step="5"
+                                className="h-12"
+                                placeholder="输入感知范围 (10-200米)"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(parseInt(e.target.value) || 50)
+                                }
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              车辆感知周围环境的范围 (10-200米)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="frame_step"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-semibold">
+                              帧步长
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="1"
+                                max="100"
+                                step="1"
+                                className="h-12"
+                                placeholder="输入帧步长 (1-100)"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(parseInt(e.target.value) || 40)
+                                }
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              数据处理的帧间隔步长 (1-100)
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Button
+                  type="submit"
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                      处理中...
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="mr-3 h-5 w-5" />
+                      开始处理数据
+                    </>
+                  )}
+                </Button>
+
+                {statusMessage && (
+                  <Alert
+                    className={`${
+                      statusMessage.includes("✅")
+                        ? "border-green-200 bg-green-50 text-green-800"
+                        : "border-red-200 bg-red-50 text-red-800"
+                    } text-center`}
+                  >
+                    <AlertDescription className="font-medium text-base">
+                      {statusMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
