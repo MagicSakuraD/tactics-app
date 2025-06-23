@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -74,6 +75,7 @@ const datasetOptions = [
 export default function DatasetConfigPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -94,28 +96,48 @@ export default function DatasetConfigPage() {
     setStatusMessage("");
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setStatusMessage("✅ 数据处理已开始！正在加载轨迹数据...");
+      // 发送数据到FastAPI后端
+      const response = await fetch(
+        "http://localhost:8000/api/simulation/initialize",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            dataset: data.dataset,
+            file_id: data.file_id,
+            dataset_path: data.dataset_path,
+            map_path: data.map_path,
+            stamp_start: data.stamp_start,
+            stamp_end: data.stamp_end,
+            perception_range: data.perception_range,
+            frame_step: data.frame_step,
+          }),
+        }
+      );
 
-      // Here you would make the actual API call
-      console.log("Form submitted:", data);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      // Example API call structure:
-      // const response = await fetch('/api/start-visualization', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // })
+      const result = await response.json();
+      setStatusMessage("✅ 数据处理已开始！正在跳转到控制台...");
+
+      // 等待一下让用户看到成功消息，然后跳转到dashboard
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1500);
     } catch (error) {
-      setStatusMessage("❌ 处理失败，请检查配置参数");
+      console.error("Error submitting form:", error);
+      setStatusMessage("❌ 处理失败，请检查配置参数和后端服务");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -135,7 +157,7 @@ export default function DatasetConfigPage() {
           </p>
         </div>
 
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-0 backdrop-blur-sm">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center gap-2 text-2xl">
               <Settings className="h-6 w-6 text-blue-600" />
@@ -241,7 +263,6 @@ export default function DatasetConfigPage() {
                             <Input
                               placeholder="例如: /home/quinn/APP/Code/tactics2d/data/trajectory_sample/highD/data"
                               className="h-12 pr-10"
-                              type="file"
                               {...field}
                             />
                             <FolderOpen className="absolute right-3 top-3 h-6 w-6 text-gray-400" />
@@ -268,7 +289,6 @@ export default function DatasetConfigPage() {
                             <Input
                               placeholder="例如: /home/quinn/APP/Code/tactics2d/data/highD_map/highD_2.osm"
                               className="h-12 pr-10"
-                              type="file"
                               {...field}
                             />
                             <FolderOpen className="absolute right-3 top-3 h-6 w-6 text-gray-400" />

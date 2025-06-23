@@ -1,262 +1,299 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ArchiveX, Command, File, Inbox, Send, Trash2 } from "lucide-react"
+import * as React from "react";
+import {
+  Car,
+  Play,
+  Pause,
+  Square,
+  BarChart3,
+  Settings,
+  MapPin,
+  Home,
+  Database,
+  Monitor,
+  FileText,
+  ChevronRight,
+} from "lucide-react";
 
-import { NavUser } from "@/components/nav-user"
-import { Label } from "@/components/ui/label"
+import { NavUser } from "@/components/nav-user";
+import { ModeToggle } from "@/components/mode-toggle";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
-  SidebarInput,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { Switch } from "@/components/ui/switch"
+} from "@/components/ui/sidebar";
 
-// This is sample data
+// Tactics2D 项目数据
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    name: "Tactics2D User",
+    email: "user@tactics2d.com",
+    avatar: "/logo2.jpg",
   },
   navMain: [
     {
-      title: "Inbox",
-      url: "#",
-      icon: Inbox,
+      title: "首页",
+      url: "/",
+      icon: Home,
+      isActive: false,
+    },
+    {
+      title: "控制台",
+      url: "/dashboard",
+      icon: Monitor,
       isActive: true,
     },
     {
-      title: "Drafts",
-      url: "#",
-      icon: File,
+      title: "数据集",
+      url: "/datasets",
+      icon: Database,
       isActive: false,
     },
     {
-      title: "Sent",
-      url: "#",
-      icon: Send,
-      isActive: false,
-    },
-    {
-      title: "Junk",
-      url: "#",
-      icon: ArchiveX,
-      isActive: false,
-    },
-    {
-      title: "Trash",
-      url: "#",
-      icon: Trash2,
+      title: "文档",
+      url: "/docs",
+      icon: FileText,
       isActive: false,
     },
   ],
-  mails: [
-    {
-      name: "William Smith",
-      email: "williamsmith@example.com",
-      subject: "Meeting Tomorrow",
-      date: "09:34 AM",
-      teaser:
-        "Hi team, just a reminder about our meeting tomorrow at 10 AM.\nPlease come prepared with your project updates.",
-    },
-    {
-      name: "Alice Smith",
-      email: "alicesmith@example.com",
-      subject: "Re: Project Update",
-      date: "Yesterday",
-      teaser:
-        "Thanks for the update. The progress looks great so far.\nLet's schedule a call to discuss the next steps.",
-    },
-    {
-      name: "Bob Johnson",
-      email: "bobjohnson@example.com",
-      subject: "Weekend Plans",
-      date: "2 days ago",
-      teaser:
-        "Hey everyone! I'm thinking of organizing a team outing this weekend.\nWould you be interested in a hiking trip or a beach day?",
-    },
-    {
-      name: "Emily Davis",
-      email: "emilydavis@example.com",
-      subject: "Re: Question about Budget",
-      date: "2 days ago",
-      teaser:
-        "I've reviewed the budget numbers you sent over.\nCan we set up a quick call to discuss some potential adjustments?",
-    },
-    {
-      name: "Michael Wilson",
-      email: "michaelwilson@example.com",
-      subject: "Important Announcement",
-      date: "1 week ago",
-      teaser:
-        "Please join us for an all-hands meeting this Friday at 3 PM.\nWe have some exciting news to share about the company's future.",
-    },
-    {
-      name: "Sarah Brown",
-      email: "sarahbrown@example.com",
-      subject: "Re: Feedback on Proposal",
-      date: "1 week ago",
-      teaser:
-        "Thank you for sending over the proposal. I've reviewed it and have some thoughts.\nCould we schedule a meeting to discuss my feedback in detail?",
-    },
-    {
-      name: "David Lee",
-      email: "davidlee@example.com",
-      subject: "New Project Idea",
-      date: "1 week ago",
-      teaser:
-        "I've been brainstorming and came up with an interesting project concept.\nDo you have time this week to discuss its potential impact and feasibility?",
-    },
-    {
-      name: "Olivia Wilson",
-      email: "oliviawilson@example.com",
-      subject: "Vacation Plans",
-      date: "1 week ago",
-      teaser:
-        "Just a heads up that I'll be taking a two-week vacation next month.\nI'll make sure all my projects are up to date before I leave.",
-    },
-    {
-      name: "James Martin",
-      email: "jamesmartin@example.com",
-      subject: "Re: Conference Registration",
-      date: "1 week ago",
-      teaser:
-        "I've completed the registration for the upcoming tech conference.\nLet me know if you need any additional information from my end.",
-    },
-    {
-      name: "Sophia White",
-      email: "sophiawhite@example.com",
-      subject: "Team Dinner",
-      date: "1 week ago",
-      teaser:
-        "To celebrate our recent project success, I'd like to organize a team dinner.\nAre you available next Friday evening? Please let me know your preferences.",
-    },
-  ],
+};
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  simulationStatus?: "idle" | "running" | "paused" | "stopped";
+  currentFrame?: number;
+  totalFrames?: number;
+  participantCount?: number;
+  onPlayPause?: () => void;
+  onStop?: () => void;
+  isConnected?: boolean;
+  onStartStream?: () => void;
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  // Note: I'm using state to show active item.
-  // IRL you should use the url/router.
-  const [activeItem, setActiveItem] = React.useState(data.navMain[0])
-  const [mails, setMails] = React.useState(data.mails)
-  const { setOpen } = useSidebar()
+export function AppSidebar({
+  simulationStatus = "idle",
+  currentFrame = 0,
+  totalFrames = 0,
+  participantCount = 0,
+  onPlayPause,
+  onStop,
+  isConnected = false,
+  onStartStream,
+  ...props
+}: AppSidebarProps) {
+  const [isControlPanelOpen, setIsControlPanelOpen] = React.useState(false);
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
-      {...props}
-    >
-      {/* This is the first sidebar */}
-      {/* We disable collapsible and adjust width to icon. */}
-      {/* This will make the sidebar appear as icons. */}
-      <Sidebar
-        collapsible="none"
-        className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
-      >
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="md:h-8 md:p-0">
-                <a href="#">
-                  <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                    <Command className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">Acme Inc</span>
-                    <span className="truncate text-xs">Enterprise</span>
-                  </div>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent className="px-1.5 md:px-0">
-              <SidebarMenu>
-                {data.navMain.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      tooltip={{
-                        children: item.title,
-                        hidden: false,
-                      }}
-                      onClick={() => {
-                        setActiveItem(item)
-                        const mail = data.mails.sort(() => Math.random() - 0.5)
-                        setMails(
-                          mail.slice(
-                            0,
-                            Math.max(5, Math.floor(Math.random() * 10) + 1)
-                          )
-                        )
-                        setOpen(true)
-                      }}
-                      isActive={activeItem?.title === item.title}
-                      className="px-2.5 md:px-2"
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <NavUser user={data.user} />
-        </SidebarFooter>
-      </Sidebar>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="/">
+                <div className="bg-blue-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <Car className="size-4" />
+                </div>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">Tactics2D</span>
+                  <span className="truncate text-xs">轨迹可视化</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      {/* This is the second sidebar */}
-      {/* We disable collapsible and let it fill remaining space */}
-      <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-        <SidebarHeader className="gap-3.5 border-b p-4">
-          <div className="flex w-full items-center justify-between">
-            <div className="text-foreground text-base font-medium">
-              {activeItem?.title}
-            </div>
-            <Label className="flex items-center gap-2 text-sm">
-              <span>Unreads</span>
-              <Switch className="shadow-none" />
-            </Label>
-          </div>
-          <SidebarInput placeholder="Type to search..." />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup className="px-0">
-            <SidebarGroupContent>
-              {mails.map((mail) => (
-                <a
-                  href="#"
-                  key={mail.email}
-                  className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
-                >
-                  <div className="flex w-full items-center gap-2">
-                    <span>{mail.name}</span>{" "}
-                    <span className="ml-auto text-xs">{mail.date}</span>
-                  </div>
-                  <span className="font-medium">{mail.subject}</span>
-                  <span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-                    {mail.teaser}
-                  </span>
-                </a>
+      <SidebarContent>
+        {/* 导航菜单 */}
+        <SidebarGroup>
+          <SidebarGroupLabel>导航</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {data.navMain.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  {item.title === "控制台" ? (
+                    <Collapsible
+                      open={isControlPanelOpen}
+                      onOpenChange={setIsControlPanelOpen}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton
+                          isActive={item.isActive}
+                          tooltip={item.title}
+                          className="w-full"
+                        >
+                          <item.icon />
+                          <span>{item.title}</span>
+                          <ChevronRight
+                            className={`ml-auto h-4 w-4 transition-transform duration-200 ${
+                              isControlPanelOpen ? "rotate-90" : ""
+                            }`}
+                          />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="space-y-2">
+                        {/* 仿真控制面板 */}
+                        <div className="ml-6 mt-2 space-y-4">
+                          <Card className="border shadow-sm">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <Car className="h-4 w-4 text-blue-600" />
+                                播放控制
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              {/* 开始仿真按钮 */}
+                              <Button
+                                onClick={onStartStream}
+                                disabled={!isConnected}
+                                variant="default"
+                                size="sm"
+                                className="w-full"
+                              >
+                                开始仿真
+                              </Button>
+                              
+                              {/* 播放控制按钮 */}
+                              <div className="flex space-x-2">
+                                <Button
+                                  onClick={onPlayPause}
+                                  variant={
+                                    simulationStatus === "running"
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  {simulationStatus === "running" ? (
+                                    <Pause className="h-3 w-3" />
+                                  ) : (
+                                    <Play className="h-3 w-3" />
+                                  )}
+                                </Button>
+                                <Button
+                                  onClick={onStop}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <Square className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div className="text-xs text-muted-foreground text-center">
+                                {simulationStatus === "idle"
+                                  ? "待机"
+                                  : simulationStatus === "running"
+                                  ? "运行中"
+                                  : simulationStatus === "paused"
+                                  ? "已暂停"
+                                  : "已停止"}
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          {/* 数据统计 */}
+                          <div className="space-y-2">
+                            <Card className="border shadow-sm">
+                              <CardContent className="p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <BarChart3 className="h-4 w-4 text-green-600" />
+                                    <span className="text-sm">参与者</span>
+                                  </div>
+                                  <span className="text-lg font-bold">
+                                    {participantCount}
+                                  </span>
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            <Card className="border shadow-sm">
+                              <CardContent className="p-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <MapPin className="h-4 w-4 text-purple-600" />
+                                    <span className="text-sm">当前帧</span>
+                                  </div>
+                                  <span className="text-lg font-bold">
+                                    {currentFrame}
+                                  </span>
+                                </div>
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  总帧数: {totalFrames}
+                                </div>
+                                <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                                  <div
+                                    className="bg-purple-600 h-1.5 rounded-full transition-all duration-300"
+                                    style={{
+                                      width: `${
+                                        totalFrames > 0
+                                          ? (currentFrame / totalFrames) * 100
+                                          : 0
+                                      }%`,
+                                    }}
+                                  ></div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={item.isActive}
+                      tooltip={item.title}
+                    >
+                      <a href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
               ))}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* 主题切换 */}
+        <SidebarGroup>
+          <SidebarGroupLabel>系统</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton tooltip="主题切换">
+                  {/* <Settings />
+                  <span>设置</span> */}
+                  <div className="flex items-center justify-between pl-0">
+                    <ModeToggle />
+                    <span className="text-sm pl-2">主题切换</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <NavUser user={data.user} />
+      </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
